@@ -1,0 +1,1 @@
+﻿A concurrent queue without lock. High effiency.
