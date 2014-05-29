@@ -4,6 +4,17 @@
 #include "stdafx.h"
 #include "ConcurrentQueue.h"
 
+using namespace std;
+
+int cnt=0;
+
+struct Foo
+{
+    int i;
+    Foo(){i=cnt++; cout<<"Foo cstr..."<<i<<endl;}
+    ~Foo(){cout<<"Foo decstr..."<<i<<endl;}
+};
+
 struct strt
 {
 	ConcurrentQueue<int>* q;
@@ -23,8 +34,18 @@ DWORD WINAPI thProc(LPARAM lp)
 	return 0;
 }
 
+DWORD WINAPI thProc2(LPARAM lp)
+{
+    auto q=(ConcurrentQueue<shared_ptr<Foo>>*)lp;
+    shared_ptr<Foo> foo;
+    q->Dequeue(&foo);
+    q->Dequeue(&foo);
+    return 0;
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
+
 	ConcurrentQueue<int> q;
 	strt a={&q,0,5};
 	strt b={&q,1,5};
@@ -67,7 +88,16 @@ int _tmain(int argc, _TCHAR* argv[])
 			Sleep(1);
 		}
 	}
-
+    {
+    shared_ptr<Foo> foo(new Foo());
+    shared_ptr<Foo> foo2(new Foo());
+    ConcurrentQueue<shared_ptr<Foo>> q;
+    q.Enqueue(foo);
+    q.Enqueue(foo2);
+    auto thread=CreateThread(0,0,(LPTHREAD_START_ROUTINE)thProc2,(LPVOID)&q,0,0);
+    WaitForSingleObject(thread,-1);
+    }
+    getch();
 	return 0;
 }
 

@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <windows.h>
+#include <memory>
+#include <iostream>
+#include <conio.h>
 
 
 // TODO: 在此处引用程序需要的其他头文件

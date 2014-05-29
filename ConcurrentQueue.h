@@ -13,7 +13,7 @@ private:
 	{
 		volatile Node* ptr1;
 		volatile u32 cnt;
-		bool operator==(Pointer& p2)
+		bool operator==(volatile Pointer& p2)
 		{
 			return this->ptr1==p2.ptr1 && this->cnt==p2.cnt;
 		}
@@ -30,8 +30,8 @@ private:
 		T data;
 	};
 
-	Pointer head_;
-	Pointer tail_;
+	volatile Pointer head_;
+	volatile Pointer tail_;
 
 	static inline bool CompareAndExchange(volatile Pointer* toXch,volatile Node* ptr11,
 		u32 cnt1,volatile Node* ptr12,u32 cnt2)
@@ -61,7 +61,16 @@ public:
 		head_.cnt=tail_.cnt=n->next.cnt=0;
 	}
 
-	void Enqueue(T data)
+    ~ConcurrentQueue()
+    {
+        T temp;
+        while(Dequeue(&temp))
+            ;
+        if(head_.ptr1)
+            delete head_.ptr1;
+    }
+
+	void Enqueue(T& data)
 	{
 		Node* node=new Node();
 		node->data=data;
@@ -106,7 +115,7 @@ public:
 				}
 				else
 				{
-					*data=n.ptr1->data;
+					*data=*(T*)&n.ptr1->data;
 					if(CompareAndExchange(&head_,h.ptr1,h.cnt,n.ptr1,h.cnt+1))
 						break;
 				}
