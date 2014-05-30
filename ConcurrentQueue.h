@@ -64,7 +64,7 @@ public:
     ~ConcurrentQueue()
     {
         T temp;
-        while(Dequeue(&temp))
+        while(Dequeue(temp))
             ;
         if(head_.ptr1)
             delete head_.ptr1;
@@ -97,7 +97,7 @@ public:
 		CompareAndExchange(&tail_,t.ptr1,t.cnt,node,t.cnt+1);
 	}
 
-	bool Dequeue(T* data)
+	bool Dequeue(T& data)
 	{
 		Pointer h,t,n;
 		while(true)
@@ -115,7 +115,7 @@ public:
 				}
 				else
 				{
-					*data=*(T*)&n.ptr1->data;
+					data=*(T*)&n.ptr1->data;
 					if(CompareAndExchange(&head_,h.ptr1,h.cnt,n.ptr1,h.cnt+1))
 						break;
 				}
