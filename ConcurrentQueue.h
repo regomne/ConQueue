@@ -10,6 +10,8 @@ typedef unsigned int usize_t;
 
 #define NEW_NODE(name) \
     Node* name = new Node();
+#define DELETE_NODE(name)\
+    delete name;
 
 #else
 #ifdef _AMD64_
@@ -23,6 +25,10 @@ extern "C" bool CompareAndExchange16(volatile void* toXch, volatile void* ptr11,
 #define NEW_NODE(name) \
     Node* name = (Node*)_aligned_malloc(sizeof(ConcurrentQueue), CMPXCHG_ALIGNED_SIZE); \
     new(name)Node();
+
+#define DELETE_NODE(name)\
+    name->data.~T();\
+    _aligned_free(*(void**)&name);
 
 #endif
 #endif
@@ -99,9 +105,9 @@ public:
     {
         ConcurrentQueue* q = (ConcurrentQueue*)_aligned_malloc(sizeof(ConcurrentQueue), CMPXCHG_ALIGNED_SIZE);
         if (!q)
-            return q;
+            return std::shared_ptr<ConcurrentQueue>(nullptr);
         new (q)ConcurrentQueue();
-        return std::shared_ptr<ConcurrentQueue>(q, [](ConcurrentQueue* p){q->~ConcurrentQueue(); _aligned_free(p); });
+        return std::shared_ptr<ConcurrentQueue>(q, [](ConcurrentQueue* p){p->~ConcurrentQueue(); _aligned_free(p); });
     }
 #endif
 
@@ -120,7 +126,7 @@ public:
         while (Dequeue(temp))
             ;
         if (head_.ptr1)
-            delete head_.ptr1;
+            DELETE_NODE(head_.ptr1);
     }
 
     void Enqueue(T& data)
@@ -174,7 +180,7 @@ public:
                 }
             }
         }
-        delete h.ptr1;
+        DELETE_NODE(h.ptr1);
         return true;
     }
 };
